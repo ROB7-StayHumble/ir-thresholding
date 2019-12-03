@@ -14,6 +14,17 @@ masks = {
          '1571825142073643588_IR.png':[200,480,0,93]
          }
 
+def fixed_aspect_ratio(ratio):
+    '''
+    Set a fixed aspect ratio on matplotlib plots
+    regardless of axis units
+    '''
+    xvals,yvals = plt.gca().axes.get_xlim(),plt.gca().axes.get_ylim()
+
+    xrange = xvals[1]-xvals[0]
+    yrange = yvals[1]-yvals[0]
+    plt.gca().set_aspect(ratio*(xrange/yrange), adjustable='box')
+
 
 # Malisiewicz et al.
 def non_max_suppression_fast(boxes, overlapThresh):
@@ -220,9 +231,10 @@ def thresholding(imgpath):
 
     for i in range(2):
         plt.subplot(1, 2, i + 1), plt.imshow(images[i], 'gray')
-        plt.title(titles[i])
+        # plt.title(titles[i])
         plt.xticks([]), plt.yticks([])
 
+    plt.savefig("results/thresh/"+imgpath,bbox_inches='tight')
     # plt.show()
 
     return img, thresh_bin
@@ -246,16 +258,26 @@ def histo(imgpath):
 
     hist_mask_norm = cv2.normalize(hist_mask, hist_mask, 1, 0, cv2.NORM_L1)
 
-    plt.subplot(221), plt.imshow(img, 'gray')
-    plt.subplot(222), plt.imshow(mask, 'gray')
-    plt.subplot(223), plt.imshow(masked_img, 'gray')
-    plt.subplot(224), plt.plot(hist_full_norm), plt.plot(hist_mask_norm)
+    person = img[y1:y2, x1:x2]
+    plt.figure(num=None, figsize=(12, 4), dpi=80, facecolor='w', edgecolor='k')
+    plt.subplot(131), plt.imshow(img, 'gray')
+    # plt.subplot(222), plt.imshow(mask, 'gray')
+    plt.subplot(132), plt.imshow(masked_img, 'gray')
+    plt.subplot(133)
+    plt.plot(hist_full_norm), plt.plot(hist_mask_norm)
+    fixed_aspect_ratio(0.6)
+
     plt.axvline(img.mean(), color='k', linestyle='dashed', linewidth=1)
+    plt.axvline(person.mean(), color='k', linestyle='dashed', linewidth=1)
     plt.xlim([0, 256])
     min_ylim, max_ylim = plt.ylim()
     plt.text(img.mean() * 1.1, max_ylim * 0.9, 'Mean: {:.2f}'.format(img.mean()))
+    plt.text(person.mean() * 1.1, max_ylim * 0.7, 'Mean: {:.2f}'.format(person.mean()))
+    plt.savefig("results/histo/"+imgpath,bbox_inches='tight')
 
-    plt.show()
+    print(person.mean()/img.mean())
+    # plt.show()
+
     return img
 
 for imgpath in glob.glob("*.png"):
